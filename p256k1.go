@@ -233,21 +233,21 @@ func (q *P256K1Point) Add(p1, p2 *P256K1Point) *P256K1Point {
 	x3.Mul(x3, y3)                               // X3 := X3 * Y3
 	y3.Add(t0, t2)                               // Y3 := t0 + t2
 	y3.Sub(x3, y3)                               // Y3 := X3 - Y3
-	x3.Add(t0, t0)      // X3 := t0 + t0
-	t0.Add(x3, t0)      // t0 := X3 + t0
-	t2.Mul(b3, t2) // t2 := b3 * t2
-	z3 := new(secp256k1.Element).Add(t1, t2) // Z3 := t1 * t2
-	t1.Sub(t1, t2) // t1 := t1 -t2
-	y3.Mul(b3, y3) // Y3 := b3*Y3
-	x3.Mul(t4, y3) // X3 := t4 * Y3
-	t2.Mul(t3, t1) // t2 := t3 * t1
-	x3.Sub(t2, x3) // x3 := t2 - X3
-	y3.Mul(y3, t0) // Y3 := Y3 * t0
-	t1.Mul(t1, z3) // t1 := t1 * Z3
-	y3.Add(t1, y3) // Y3 := t1 + Y3
-	t0.Mul(t0, t3) // t0 := t0 * t3
-	z3.Mul(z3, t4) // Z3 := Z3 * t4
-	z3.Add(z3, t0) // Z3 := Z3 + t0
+	x3.Add(t0, t0)                               // X3 := t0 + t0
+	t0.Add(x3, t0)                               // t0 := X3 + t0
+	t2.Mul(b3, t2)                               // t2 := b3 * t2
+	z3 := new(secp256k1.Element).Add(t1, t2)     // Z3 := t1 * t2
+	t1.Sub(t1, t2)                               // t1 := t1 -t2
+	y3.Mul(b3, y3)                               // Y3 := b3*Y3
+	x3.Mul(t4, y3)                               // X3 := t4 * Y3
+	t2.Mul(t3, t1)                               // t2 := t3 * t1
+	x3.Sub(t2, x3)                               // x3 := t2 - X3
+	y3.Mul(y3, t0)                               // Y3 := Y3 * t0
+	t1.Mul(t1, z3)                               // t1 := t1 * Z3
+	y3.Add(t1, y3)                               // Y3 := t1 + Y3
+	t0.Mul(t0, t3)                               // t0 := t0 * t3
+	z3.Mul(z3, t4)                               // Z3 := Z3 * t4
+	z3.Add(z3, t0)                               // Z3 := Z3 + t0
 
 	q.x.Set(x3)
 	q.y.Set(y3)
@@ -263,15 +263,15 @@ func (q *P256K1Point) Double(p *P256K1Point) *P256K1Point {
 	b3 := new(secp256k1.Element).Add(p256k1B, p256k1B)
 	b3 = new(secp256k1.Element).Add(b3, p256k1B)
 
-	t0 := new(secp256k1.Element).Square(p.y) // t0 := Y^2
-	z3 := new(secp256k1.Element).Add(t0, t0) // Z3 := t0 + t0
-	z3.Add(z3, z3) // Z3 := Z3 + Z3
-	z3.Add(z3, z3) // Z3 := Z3 + Z3
-	t1 := new(secp256k1.Element).Mul(p.y, p.z)// t1 := Y * Z
-	t2 := new(secp256k1.Element).Square(p.z) // t2 := Z^2
-	t2.Mul(b3, t2) // t2 := b3 * t2
-	x3 := new(secp256k1.Element).Mul(t2, z3) // X3 := t2 * Z3
-	y3 := new(secp256k1.Element).Add(t0, t2) // Y3 := t0 + t2
+	t0 := new(secp256k1.Element).Square(p.y)   // t0 := Y^2
+	z3 := new(secp256k1.Element).Add(t0, t0)   // Z3 := t0 + t0
+	z3.Add(z3, z3)                             // Z3 := Z3 + Z3
+	z3.Add(z3, z3)                             // Z3 := Z3 + Z3
+	t1 := new(secp256k1.Element).Mul(p.y, p.z) // t1 := Y * Z
+	t2 := new(secp256k1.Element).Square(p.z)   // t2 := Z^2
+	t2.Mul(b3, t2)                             // t2 := b3 * t2
+	x3 := new(secp256k1.Element).Mul(t2, z3)   // X3 := t2 * Z3
+	y3 := new(secp256k1.Element).Add(t0, t2)   // Y3 := t0 + t2
 	z3.Mul(t1, z3)
 	t1.Add(t2, t2)
 	t2.Add(t1, t2)
@@ -288,6 +288,14 @@ func (q *P256K1Point) Double(p *P256K1Point) *P256K1Point {
 	q.y.Set(y3)
 	q.z.Set(z3)
 	return q
+}
+
+func (q *P256K1Point) Sub(p *P256K1Point) *P256K1Point {
+	zero := new(secp256k1.Element)
+	point := new(P256K1Point)
+	point.Set(p)
+	point.y.Sub(zero, p.y) // -y
+	return q.Add(q, point)
 }
 
 // Select sets q to p1 if cond == 1, and to p2 if cond == 0.
