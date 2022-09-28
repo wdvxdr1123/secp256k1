@@ -7,13 +7,22 @@ package secp256k1
 import (
 	"crypto/subtle"
 	"errors"
-	"fmt"
 	"sync"
 )
 
-var b, _ = new(Element).SetBytes([]byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x7})
+var b, _ = new(Element).SetBytes([]byte{
+	0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+	0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+	0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+	0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x7,
+})
 
-var b3, _ = new(Element).SetBytes([]byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x15})
+var b3, _ = new(Element).SetBytes([]byte{
+	0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+	0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+	0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+	0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x15,
+})
 
 var g, _ = NewPoint().SetBytes([]byte{0x4, 0x79, 0xbe, 0x66, 0x7e, 0xf9, 0xdc, 0xbb, 0xac, 0x55, 0xa0, 0x62, 0x95, 0xce, 0x87, 0xb, 0x7, 0x2, 0x9b, 0xfc, 0xdb, 0x2d, 0xce, 0x28, 0xd9, 0x59, 0xf2, 0x81, 0x5b, 0x16, 0xf8, 0x17, 0x98, 0x48, 0x3a, 0xda, 0x77, 0x26, 0xa3, 0xc4, 0x65, 0x5d, 0xa4, 0xfb, 0xfc, 0xe, 0x11, 0x8, 0xa8, 0xfd, 0x17, 0xb4, 0x48, 0xa6, 0x85, 0x54, 0x19, 0x9c, 0x47, 0xd0, 0x8f, 0xfb, 0x10, 0xd4, 0xb8})
 
@@ -58,12 +67,6 @@ func (p *Point) Set(q *Point) *Point {
 // the curve, it returns nil and an error, and the receiver is unchanged.
 // Otherwise, it returns p.
 func (p *Point) SetBytes(b []byte) (_ *Point, e error) {
-	defer func() {
-		if e != nil {
-			fmt.Printf("%X\n", b)
-			fmt.Println(e)
-		}
-	}()
 	switch {
 	// Point at infinity.
 	case len(b) == 1 && b[0] == 0:
@@ -97,7 +100,7 @@ func (p *Point) SetBytes(b []byte) (_ *Point, e error) {
 		// Y² = X³ + b
 		y := polynomial(new(Element), x)
 		if !sqrt(y, y) {
-			return nil, errors.New("invalid P256K1 compressed point encoding")
+			return nil, errors.New("invalid secp256k1 compressed point encoding")
 		}
 
 		// Select the positive or negative root, as indicated by the least
@@ -113,16 +116,15 @@ func (p *Point) SetBytes(b []byte) (_ *Point, e error) {
 		return p, nil
 
 	default:
-		return nil, errors.New("invalid P256K1 point encoding")
+		return nil, errors.New("invalid secp256k1 point encoding")
 	}
 }
 
 // polynomial sets y2 to X³ + b, and returns y2.
 func polynomial(y2, x *Element) *Element {
-	y2.Square(x)
-	y2.Mul(y2, x)
-
-	return y2.Add(y2, b)
+	y2.Square(x)         // y2 := x  * x
+	y2.Mul(y2, x)        // y2 := y2 * x
+	return y2.Add(y2, b) // y2 := y2 + b
 }
 
 func checkOnCurve(x, y *Element) error {
@@ -130,7 +132,7 @@ func checkOnCurve(x, y *Element) error {
 	rhs := polynomial(new(Element), x)
 	lhs := new(Element).Square(y)
 	if rhs.Equal(lhs) != 1 {
-		return errors.New("P256K1 point not on curve")
+		return errors.New("secp256k1 point not on curve")
 	}
 	return nil
 }
@@ -207,7 +209,7 @@ func (p *Point) bytesCompressed(out *[1 + ElementLength]byte) []byte {
 // Add sets q = p1 + p2, and returns q. The points may overlap.
 func (p *Point) Add(p1, p2 *Point) *Point {
 	// Complete addition formula for a = 0 from "Complete addition formulas for
-	// prime order elliptic curves" (https://eprint.iacr.org/2015/1060), §A.2.
+	// prime order elliptic curves" (https://eprint.iacr.org/2015/1060), §A.3.
 
 	t0 := new(Element).Mul(p1.X, p2.X) // t0 := X1 * X2
 	t1 := new(Element).Mul(p1.Y, p2.Y) // t1 := Y1 * Y2
@@ -231,8 +233,8 @@ func (p *Point) Add(p1, p2 *Point) *Point {
 	t0.Add(x3, t0)                     // t0 := X3 + t0
 	t2.Mul(b3, t2)                     // t2 := b3 * t2
 	z3 := new(Element).Add(t1, t2)     // Z3 := t1 * t2
-	t1.Sub(t1, t2)                     // t1 := t1 -t2
-	y3.Mul(b3, y3)                     // Y3 := b3*Y3
+	t1.Sub(t1, t2)                     // t1 := t1 - t2
+	y3.Mul(b3, y3)                     // Y3 := b3 * Y3
 	x3.Mul(t4, y3)                     // X3 := t4 * Y3
 	t2.Mul(t3, t1)                     // t2 := t3 * t1
 	x3.Sub(t2, x3)                     // x3 := t2 - X3
@@ -252,7 +254,7 @@ func (p *Point) Add(p1, p2 *Point) *Point {
 // Sub sets q = p1 - p2, and returns q. The points may overlap.
 func (q *Point) Sub(p1, p2 *Point) *Point {
 	// Complete addition formula for a = 0 from "Complete addition formulas for
-	// prime order elliptic curves" (https://eprint.iacr.org/2015/1060), §A.2.
+	// prime order elliptic curves" (https://eprint.iacr.org/2015/1060), §A.3.
 
 	t0 := new(Element).Mul(p1.X, p2.X) // t0 := X1 * X2
 	y2 := new(Element)                 // Y2
@@ -278,8 +280,8 @@ func (q *Point) Sub(p1, p2 *Point) *Point {
 	t0.Add(x3, t0)                     // t0 := X3 + t0
 	t2.Mul(b3, t2)                     // t2 := b3 * t2
 	z3 := new(Element).Add(t1, t2)     // Z3 := t1 * t2
-	t1.Sub(t1, t2)                     // t1 := t1 -t2
-	y3.Mul(b3, y3)                     // Y3 := b3*Y3
+	t1.Sub(t1, t2)                     // t1 := t1 - t2
+	y3.Mul(b3, y3)                     // Y3 := b3 * Y3
 	x3.Mul(t4, y3)                     // X3 := t4 * Y3
 	t2.Mul(t3, t1)                     // t2 := t3 * t1
 	x3.Sub(t2, x3)                     // x3 := t2 - X3
@@ -299,28 +301,26 @@ func (q *Point) Sub(p1, p2 *Point) *Point {
 // Double sets q = p + p, and returns q. The points may overlap.
 func (q *Point) Double(p *Point) *Point {
 	// Complete addition formula for a = 0 from "Complete addition formulas for
-	// prime order elliptic curves" (https://eprint.iacr.org/2015/1060), §A.2.
+	// prime order elliptic curves" (https://eprint.iacr.org/2015/1060), §A.3.
 
 	t0 := new(Element).Square(p.Y)   // t0 := Y^2
 	z3 := new(Element).Add(t0, t0)   // Z3 := t0 + t0
 	z3.Add(z3, z3)                   // Z3 := Z3 + Z3
 	z3.Add(z3, z3)                   // Z3 := Z3 + Z3
-	t1 := new(Element).Mul(p.Y, p.Z) // t1 := Y * Z
+	t1 := new(Element).Mul(p.Y, p.Z) // t1 := Y  * Z
 	t2 := new(Element).Square(p.Z)   // t2 := Z^2
 	t2.Mul(b3, t2)                   // t2 := b3 * t2
 	x3 := new(Element).Mul(t2, z3)   // X3 := t2 * Z3
 	y3 := new(Element).Add(t0, t2)   // Y3 := t0 + t2
-	z3.Mul(t1, z3)
-	t1.Add(t2, t2)
-	t2.Add(t1, t2)
-
-	t0.Sub(t0, t2)
-	y3.Mul(t0, y3)
-	y3.Add(x3, y3)
-
-	t1.Mul(p.X, p.Y)
-	x3.Mul(t0, t1)
-	x3.Add(x3, x3)
+	z3.Mul(t1, z3)                   // Z3 := t1 * Z3
+	t1.Add(t2, t2)                   // t1 := t2 + t2
+	t2.Add(t1, t2)                   // t2 := t1 + t2
+	t0.Sub(t0, t2)                   // t0 := t0 - t2
+	y3.Mul(t0, y3)                   // Y3 := t0 * Y3
+	y3.Add(x3, y3)                   // Y3 := X3 + Y3
+	t1.Mul(p.X, p.Y)                 // t1 := X  * Y
+	x3.Mul(t0, t1)                   // X3 := t0 * t1
+	x3.Add(x3, x3)                   // X3 := X3 + X3
 
 	p.X.Set(x3)
 	p.Y.Set(y3)
@@ -345,7 +345,7 @@ type table [15]*Point
 // constant time by iterating over every entry of the table. n must be in [0, 15].
 func (table *table) Select(p *Point, n uint8) {
 	if n >= 16 {
-		panic("nistec: internal error: table called with out-of-bounds value")
+		panic("secp256k1: internal error: table called with out-of-bounds value")
 	}
 	p.Set(NewPoint())
 	for i := uint8(1); i < 16; i++ {
@@ -402,7 +402,7 @@ func (p *Point) ScalarMult(q *Point, scalar []byte) (*Point, error) {
 var generatorTable *[ElementLength * 2]table
 var generatorTableOnce sync.Once
 
-// generatorTable returns a sequence of p256k1Tables. The first table contains
+// generatorTable returns a sequence of tables. The first table contains
 // multiples of G. Each successive table is the previous table doubled four
 // times.
 func (p *Point) generatorTable() *[ElementLength * 2]table {
