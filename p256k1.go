@@ -292,7 +292,7 @@ func (q *P256K1Point) Double(p *P256K1Point) *P256K1Point {
 
 func (q *P256K1Point) Sub(p *P256K1Point) *P256K1Point {
 	zero := new(secp256k1.Element)
-	point := new(P256K1Point)
+	point := NewP256K1Point()
 	point.Set(p)
 	point.y.Sub(zero, p.y) // -y
 	return q.Add(q, point)
