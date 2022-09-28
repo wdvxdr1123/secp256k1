@@ -14,11 +14,11 @@ import (
 )
 
 type s256Curve struct {
-	nistCurve[*secp.P256K1Point]
+	nistCurve[*secp256k1.P256K1Point]
 }
 
-var s256 = &s256Curve{nistCurve[*secp.P256K1Point]{
-	newPoint: secp.NewP256K1Point,
+var s256 = &s256Curve{nistCurve[*secp256k1.P256K1Point]{
+	newPoint: secp256k1.NewP256K1Point,
 }}
 
 var s256Once sync.Once

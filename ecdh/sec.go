@@ -156,15 +156,15 @@ func (c *SecCurve[Point]) ECDH(local *PrivateKey, remote *PublicKey) ([]byte, er
 	return p.BytesX()
 }
 
-// S256 returns a SecCurve which implements secp256k1.
+// S256 returns a SecCurve which implements fiat.
 //
 // Multiple invocations of this function will return the same value, so it can
 // be used for equality checks and switch statements.
 func S256() Curve { return s256 }
 
-var s256 = &SecCurve[*secp.P256K1Point]{
+var s256 = &SecCurve[*secp256k1.P256K1Point]{
 	name:        "S-256",
-	newPoint:    secp.NewP256K1Point,
+	newPoint:    secp256k1.NewP256K1Point,
 	scalarOrder: s256Order,
 }
 

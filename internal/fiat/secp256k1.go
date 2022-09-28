@@ -1,4 +1,4 @@
-package secp256k1
+package fiat
 
 import (
 	"crypto/subtle"
