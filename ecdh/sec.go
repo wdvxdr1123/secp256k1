@@ -162,9 +162,9 @@ func (c *SecCurve[Point]) ECDH(local *PrivateKey, remote *PublicKey) ([]byte, er
 // be used for equality checks and switch statements.
 func S256() Curve { return s256 }
 
-var s256 = &SecCurve[*secp256k1.P256K1Point]{
+var s256 = &SecCurve[*secp256k1.Point]{
 	name:        "S-256",
-	newPoint:    secp256k1.NewP256K1Point,
+	newPoint:    secp256k1.NewPoint,
 	scalarOrder: s256Order,
 }
 
